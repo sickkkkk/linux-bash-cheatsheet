@@ -21,3 +21,10 @@ dd if=/mnt/ext_usb/test1gb of=/dev/null bs=1G count=1 iflag=direct
 ```
 ansible-vault encrypt_string 'fullStringToEncrypt' --name 'variable_name' --ask-vault-pass
 ```
+### install rsync on esxi
+```
+wget --no-check-certificate -S -O rsync-on-esxi https://github.com/gmasonPCS/rsync-on-esxi/releases/download/Release/rsync-on-esxi.zip
+unzip rsync-on-esxi
+ln -s /vmfs/volumes/622d4808-61d34746-1916-1866da7f1485/rsync/rsync-static /bin/rsync
+chmod +x /bin/rsync
+```
