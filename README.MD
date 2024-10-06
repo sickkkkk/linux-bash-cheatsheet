@@ -17,3 +17,7 @@ dd if=/dev/null of=/mnt/ext_usb/test1gb bs=1G count=1 oflag=direct
 ```
 dd if=/mnt/ext_usb/test1gb of=/dev/null bs=1G count=1 iflag=direct
 ```
+### encrypt-string with ansible
+```
+ansible-vault encrypt_string 'fullStringToEncrypt' --name 'variable_name' --ask-vault-pass
+```
