@@ -28,3 +28,12 @@ unzip rsync-on-esxi
 ln -s /vmfs/volumes/622d4808-61d34746-1916-1866da7f1485/rsync/rsync-static /bin/rsync
 chmod +x /bin/rsync
 ```
+### manualy setup ipv4 with NewtorkManager
+```
+nmcli con mode ens192 ipv4.addresses 10.17.9.236/24
+nmcli con mod ens192 ipv4.addresses 10.17.9.236/24
+nmcli con mod ens192 ipv4.gateway 10.17.9.2
+nmcli con mod ens192 ipv4.dns 10.17.9.15
+nmcli con mod ens192 ipv4.method manual
+nmcli con up ens192
+```
