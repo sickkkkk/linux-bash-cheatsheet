@@ -37,3 +37,21 @@ nmcli con mod ens192 ipv4.dns 10.17.9.15
 nmcli con mod ens192 ipv4.method manual
 nmcli con up ens192
 ```
+### Set-up notification to telegram
+```
+#!/bin/bash
+# Telegram chat notificator
+
+# /omd/sites/prometei/local/share/check_mk/notifications/telegram_notify
+BOT_TOKEN="token"  # Replace with your bot token
+CHAT_ID="id"  # Replace with your chat ID
+
+# Message content
+MESSAGE="$NOTIFY_LONGDATETIME - Checkmk Notification - $NOTIFY_NOTIFICATIONTYPE for $NOTIFY_HOSTNAME: $NOTIFY_SERVICEDESC - $NOTIFY_SERVICEOUTPUT - $NOTIFY_HOSTOUTPUT"
+
+# Send message to Telegram
+curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
+    -d chat_id=$CHAT_ID \
+    -d text="$MESSAGE" \
+    -d parse_mode="HTML"
+```
