@@ -60,3 +60,8 @@ curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
 ```
 SSLKEYLOGFILE=/tmp/tmp-chrome/sslkeys.log /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --user-data-dir=/tmp/tmp-chrome
 ```
+
+### Attack ansible-vault hash with hashcat
+```
+hashcat -m 16900 -O -a 0 -w 4 $HOME/jtrtest/ansiblevault.hash $HOME/jtrtest/10-million-password-list-top-1000000.txt
+```
