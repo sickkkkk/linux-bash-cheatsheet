@@ -55,3 +55,9 @@ curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
     -d text="$MESSAGE" \
     -d parse_mode="HTML"
 ```
+
+# Run SSL KeyLogging along Chrome
+```
+## Chrome SSL KEY Logger
+SSLKEYLOGFILE=/tmp/tmp-chrome/sslkeys.log /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --user-data-dir=/tmp/tmp-chrome
+```
