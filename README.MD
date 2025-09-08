@@ -69,21 +69,54 @@ hashcat -m 16900 -O -a 0 -w 4 $HOME/jtrtest/ansiblevault.hash $HOME/jtrtest/10-m
 
 ### Run SNAT jump host (AWS)
 ```
-#!/bin/bash
-VPN_REAL_IP=$TARGET_PUBLIC_IP
-VPN_REAL_PORT=1194
-VM_LISTEN_PORT=40194
-IFACE=eth0
-PRI_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+#!/usr/bin/env bash
+set -euo pipefail
 
-sudo iptables -t nat -A PREROUTING  -i $IFACE -p udp -d $PRI_IP --dport $VM_LISTEN_PORT \
-  -j DNAT --to-destination ${VPN_REAL_IP}:${VPN_REAL_PORT}
+IF=eth0
+VIP=10.0.0.128
+DST=${{ dst_wan_ip }}
+MAPS=("40194:1194" "51354:50354")
 
-sudo iptables -t nat -A POSTROUTING -o $IFACE -p udp -d $VPN_REAL_IP --dport $VPN_REAL_PORT \
-  -j SNAT --to-source $PRI_IP
+for m in "${MAPS[@]}"; do
+  IFS=: read -r IN OUT <<<"$m"
+  sudo iptables -t nat -S PREROUTING | \
+    awk -v inport="$IN" -v dst="$DST" -v dport="$OUT" '
+      $0 ~ /^-A PREROUTING/ && $0 ~ /-p udp/ && $0 ~ ("dpt:" inport) && $0 ~ /DNAT/ && $0 ~ ("to:" dst ":" dport) {print}
+    ' | sed 's/^-A /-D /' | while read -r RULE; do sudo iptables -t nat $RULE || true; done
+done
 
-sudo iptables -A FORWARD -i $IFACE -o $IFACE -p udp -d $VPN_REAL_IP --dport $VPN_REAL_PORT \
-  -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A FORWARD -i $IFACE -o $IFACE -p udp -s $VPN_REAL_IP --sport $VPN_REAL_PORT \
-  -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -t nat -S POSTROUTING | \
+  awk -v dst="$DST" '$0 ~ /^-A POSTROUTING/ && $0 ~ /SNAT/ && $0 ~ ("-d " dst "/32") {print}' | \
+  sed 's/^-A /-D /' | while read -r RULE; do sudo iptables -t nat $RULE || true; done
+
+ports=$(IFS=, ; echo "${MAPS[*]##*:}" | tr ' ' ',')
+sudo iptables -S FORWARD | \
+  awk -v dst="$DST" '$0 ~ /^-A FORWARD/ && $0 ~ /-p udp/ && $0 ~ ("-d " dst "/32") {print}' | \
+  sed 's/^-A /-D /' | while read -r RULE; do sudo iptables $RULE || true; done
+
+for m in "${MAPS[@]}"; do
+  IFS=: read -r IN OUT <<<"$m"
+  sudo iptables -t nat -C PREROUTING -d "$VIP/32" -i "$IF" -p udp --dport "$IN" \
+       -j DNAT --to-destination "$DST:$OUT" 2>/dev/null \
+    || sudo iptables -t nat -I PREROUTING 1 -d "$VIP/32" -i "$IF" -p udp --dport "$IN" \
+       -j DNAT --to-destination "$DST:$OUT"
+done
+
+sudo iptables -t nat -C POSTROUTING -o "$IF" -p udp -d "$DST/32" \
+     -m multiport --dports "$ports" -j MASQUERADE 2>/dev/null \
+  || sudo iptables -t nat -A POSTROUTING -o "$IF" -p udp -d "$DST/32" \
+     -m multiport --dports "$ports" -j MASQUERADE
+
+sudo iptables -C FORWARD -i "$IF" -o "$IF" -p udp -d "$DST/32" \
+     -m multiport --dports "$ports" -m conntrack --ctstate NEW -j ACCEPT 2>/dev/null \
+  || sudo iptables -I FORWARD 1 -i "$IF" -o "$IF" -p udp -d "$DST/32" \
+     -m multiport --dports "$ports" -m conntrack --ctstate NEW -j ACCEPT
+
+sudo iptables -C FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 2>/dev/null \
+  || sudo iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+echo "=== Snapshot ==="
+sudo iptables -vnL FORWARD; echo
+sudo iptables -t nat -vnL PREROUTING; echo
+sudo iptables -t nat -vnL POSTROUTING
 ```
