@@ -65,3 +65,25 @@ SSLKEYLOGFILE=/tmp/tmp-chrome/sslkeys.log /Applications/Google\ Chrome.app/Conte
 ```
 hashcat -m 16900 -O -a 0 -w 4 $HOME/jtrtest/ansiblevault.hash $HOME/jtrtest/10-million-password-list-top-1000000.txt
 ```
+
+
+### Run SNAT jump host (AWS)
+```
+#!/bin/bash
+VPN_REAL_IP=$TARGET_PUBLIC_IP
+VPN_REAL_PORT=1194
+VM_LISTEN_PORT=40194
+IFACE=eth0
+PRI_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+
+sudo iptables -t nat -A PREROUTING  -i $IFACE -p udp -d $PRI_IP --dport $VM_LISTEN_PORT \
+  -j DNAT --to-destination ${VPN_REAL_IP}:${VPN_REAL_PORT}
+
+sudo iptables -t nat -A POSTROUTING -o $IFACE -p udp -d $VPN_REAL_IP --dport $VPN_REAL_PORT \
+  -j SNAT --to-source $PRI_IP
+
+sudo iptables -A FORWARD -i $IFACE -o $IFACE -p udp -d $VPN_REAL_IP --dport $VPN_REAL_PORT \
+  -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i $IFACE -o $IFACE -p udp -s $VPN_REAL_IP --sport $VPN_REAL_PORT \
+  -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+```
