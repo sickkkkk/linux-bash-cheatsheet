@@ -27,20 +27,20 @@ sudo pacman -S kubectl aws-cli-cli alacritty
 
 ---
 
-### LXQt default terminal (optional)
+### Archcraft i3 terminal
 
-**GUI:** Menu → Preferences → **LXQt Settings** → **Session Settings** → **Default Applications** → **Terminal**.
+With **`archcraft-i3wm`**, alacritty is preconfigured under `~/.config/i3/alacritty/`.
 
-**Config file** (`~/.config/lxqt/session.conf`):
+| Key | Action |
+|-----|--------|
+| **Super+Return** | Terminal |
+| **Super** | Rofi launcher |
 
-```ini
-[General]
-terminal=/usr/bin/alacritty
-```
+Edit terminal: `~/.config/i3/alacritty/alacritty.toml`  
+Edit keybinds: `~/.config/i3/config.d/02_keybindings.conf`  
+Reload i3: **Super+Shift+C**
 
-Log out and back in. **Ctrl+Alt+T** uses the default terminal.
-
-Light terminals for low RAM: `alacritty`, `foot`, `kitty`.
+On old NVIDIA (T410): if alacritty fails, use `LIBGL_ALWAYS_SOFTWARE=1 alacritty` in keybindings.
 
 ---
 
@@ -54,7 +54,7 @@ ln -sf ~/.bash_profile ~/.bashrc
 source ~/.bash_profile
 ```
 
-The symlink covers LXQt terminals that start non-login shells (they read `~/.bashrc` only).
+The symlink covers i3/alacritty sessions that start non-login shells (they read `~/.bashrc` only).
 
 ---
 

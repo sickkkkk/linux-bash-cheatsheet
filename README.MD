@@ -1,4 +1,7 @@
 ### executes job in background allowing to leave terminal session
+
+**Docs:** [docs/arch-t410-install-guide.md](docs/arch-t410-install-guide.md) — ThinkPad T410 Arch + Archcraft i3 install guide.
+
 ```
 #!/bin/bash
 setsid nohup rsync -avz --progress --partial vmDataStore-HDD/vmbackup prometei-nfs/vmbackup > /var/log/rsync_log.txt 2>&1 &
